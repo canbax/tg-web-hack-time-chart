@@ -7,25 +7,11 @@
     "secret": "8gccenasn5hdotf7f93b6d44kfebami3"
   },
   "lifetimeProperties": {
-    "Opportunity": {
-      "start": "CreatedDate",
-      "end": "CloseDate"
-    },
-    "Campaign": {
-      "start": "StartDate",
-      "end": "EndDate"
-    },
-    "CampaignMember": {
-      "start": "CreatedDate"
-    },
-    "Lead": {
-      "start": "CreatedDate"
-    },
-    "Contact": {
-      "start": "CreatedDate"
-    },
-    "Account": {
-      "start": "CreatedDate"
-    }
+    "Opportunity": "CreatedDate",
+    "Campaign": "StartDate",
+    "CampaignMember": "CreatedDate",
+    "Lead": "CreatedDate",
+    "Contact": "CreatedDate",
+    "Account": "CreatedDate"
   }
 }

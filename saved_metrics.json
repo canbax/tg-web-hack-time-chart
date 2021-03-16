@@ -1,11 +1,1 @@
-[{
-    "name": "asd",
-    "color": "#ffffff",
-    "gsql": ""
-  },
-  {
-    "name": "asd2",
-    "color": "#000000",
-    "gsql": ""
-  }
-]
+[{"name": "asd1", "color": "#cb7e46", "object_type": "Account", "gsql": ""}, {"name": "metric 11", "color": "#5b2fde", "object_type": "Lead", "gsql": ""}]
