@@ -1,0 +1,31 @@
+{
+  "db": {
+    "host": "https://customer360.i.tgcloud.io",
+    "username": "tigergraph",
+    "password": "123456",
+    "graph_name": "MyGraph",
+    "secret": "8gccenasn5hdotf7f93b6d44kfebami3"
+  },
+  "lifetimeProperties": {
+    "Opportunity": {
+      "start": "CreatedDate",
+      "end": "CloseDate"
+    },
+    "Campaign": {
+      "start": "StartDate",
+      "end": "EndDate"
+    },
+    "CampaignMember": {
+      "start": "CreatedDate"
+    },
+    "Lead": {
+      "start": "CreatedDate"
+    },
+    "Contact": {
+      "start": "CreatedDate"
+    },
+    "Account": {
+      "start": "CreatedDate"
+    }
+  }
+}
