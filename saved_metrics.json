@@ -1,1 +1,16 @@
-[{"name": "asd1", "color": "#cb7e46", "object_type": "Account", "gsql": ""}, {"name": "metric 11", "color": "#5b2fde", "object_type": "Lead", "gsql": ""}]
+[{
+  "name": "Accounts Count",
+  "color": "#ef0e64",
+  "object_type": "Account",
+  "gsql": ""
+}, {
+  "name": "Lead Count",
+  "color": "#5b2fde",
+  "object_type": "Lead",
+  "gsql": "x.FirstName LIKE \"A%\""
+}, {
+  "name": "Campaign Count",
+  "color": "#5af328",
+  "object_type": "Campaign",
+  "gsql": ""
+}]

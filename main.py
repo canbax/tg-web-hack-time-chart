@@ -20,9 +20,11 @@ def write_saved_metrics(metrics):
     f.write(json.dumps(metrics))
 
 
-def getGSQL(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Account', time_unit='YEAR'):
-  print(cnt_stat)
-  print(time_unit)
+def getGSQL(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Account', time_unit='YEAR', condition_gsql=''):
+  time_prop = CONF['lifetimeProperties'][selected_type]
+  if len(condition_gsql) > 1:
+    condition_gsql = 'AND (' + condition_gsql + ')'
+  print(condition_gsql)
   gsql = """
   INTERPRET QUERY () FOR GRAPH MyGraph {
   SumAccum<INT> @@cnt;
@@ -33,7 +35,7 @@ def getGSQL(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Ac
 
   FOREACH i IN RANGE[1, count_stat] DO
     A = SELECT x From acc: x
-        WHERE(x.CreatedDate > startDate AND x.CreatedDate < datetime_add(startDate, INTERVAL 1 """ + time_unit + """))
+        WHERE (x.""" + time_prop + ' > startDate AND x.' + time_prop + ' < datetime_add(startDate, INTERVAL 1 ' + time_unit + ')) ' + condition_gsql + """
         ACCUM @@cnt += 1;
 
     diff = @@cnt - prev_cnt;
@@ -49,7 +51,6 @@ def getGSQL(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Ac
   print @@dates;
   }
   """
-
   return gsql
 
 
@@ -126,9 +127,9 @@ def show_metric_config_UI():
   col1, col2 = st.beta_columns(2)
   with col1:
     start_date = st.date_input('Start Date',     datetime.date(
-        2019, 7, 6), min_value=datetime.date(1900, 1, 1))
+        2000, 1, 1), min_value=datetime.date(1900, 1, 1))
   with col2:
-    start_time = st.time_input('and Time', datetime.time(8, 45))
+    start_time = st.time_input('and Time', datetime.time(0, 0))
   TIME_UNITS = ('YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTE', 'SECOND')
   # time unit and count
   col3, col4 = st.beta_columns(2)
@@ -136,7 +137,7 @@ def show_metric_config_UI():
     curr_time_unit = st.selectbox('Time Unit: ', TIME_UNITS)
   with col4:
     curr_num_data_points = st.number_input('Number of data points',
-                                           max_value=1000, min_value=0, step=1)
+                                           max_value=1000, value=20, min_value=0, step=1)
 
   col1, col2, col3 = st.beta_columns(3)
   is_any_clicked = False
@@ -174,7 +175,8 @@ def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_
   for metric in metrics:
     d = str(start_date) + 'T' + str(start_time)
     gsql = getGSQL(curr_num_data_points, d,
-                   metric['object_type'], curr_time_unit)
+                   metric['object_type'], curr_time_unit, metric['gsql'])
+    
     res = run_interpretted_gsql(gsql)
     print(res)
     fig.add_trace(go.Bar(
