@@ -5,6 +5,7 @@ import datetime
 import plotly.graph_objects as go
 import json
 import copy
+import pandas as pd
 
 with open('tg_conf.json', 'r') as f:
   CONF = json.loads(f.read())
@@ -20,11 +21,10 @@ def write_saved_metrics(metrics):
     f.write(json.dumps(metrics))
 
 
-def getGSQL(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Account', time_unit='YEAR', condition_gsql=''):
+def get_gsql4chart(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Account', time_unit='YEAR', condition_gsql=''):
   time_prop = CONF['lifetimeProperties'][selected_type]
   if len(condition_gsql) > 1:
     condition_gsql = 'AND (' + condition_gsql + ')'
-  print(condition_gsql)
   gsql = """
   INTERPRET QUERY () FOR GRAPH MyGraph {
   SumAccum<INT> @@cnt;
@@ -49,6 +49,23 @@ def getGSQL(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Ac
 
   print @@stats;
   print @@dates;
+  }
+  """
+  return gsql
+
+
+def get_gsql4table(start_date_str='2000-01-01T00:00:00', selected_type='Account', time_unit='YEAR', condition_gsql=''):
+  time_prop = CONF['lifetimeProperties'][selected_type]
+  if len(condition_gsql) > 1:
+    condition_gsql = 'AND (' + condition_gsql + ')'
+  gsql = """
+  INTERPRET QUERY () FOR GRAPH MyGraph {
+  """ + f' DATETIME startDate = to_datetime("{start_date_str}");' + \
+      'acc = {' + selected_type + '.*};' + """
+
+  A = SELECT x From acc: x
+      WHERE (x.""" + time_prop + ' > startDate AND x.' + time_prop + ' < datetime_add(startDate, INTERVAL 1 ' + time_unit + ')) ' + condition_gsql + """;
+  print A;
   }
   """
   return gsql
@@ -165,22 +182,23 @@ def show_metric_config_UI():
     delete_metric(curr_metric_name)
 
   if is_any_clicked:
-    print('yooo')
     show_chart(read_saved_metrics(), start_date, start_time,
                curr_num_data_points, curr_time_unit)
+  show_table_UI(metrics, start_date, start_time, curr_time_unit)
 
 
 def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_unit):
   fig = go.Figure()
   for metric in metrics:
     d = str(start_date) + 'T' + str(start_time)
-    gsql = getGSQL(curr_num_data_points, d,
-                   metric['object_type'], curr_time_unit, metric['gsql'])
-    
+    gsql = get_gsql4chart(curr_num_data_points, d,
+                          metric['object_type'], curr_time_unit, metric['gsql'])
+
     res = run_interpretted_gsql(gsql)
-    print(res)
     fig.add_trace(go.Bar(
         y=res[0]['@@stats'],
+        text=res[0]['@@stats'],
+        textposition='outside',
         x=res[1]['@@dates'],
         name=metric['name'],
         marker_color=metric['color']
@@ -191,5 +209,19 @@ def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_
   st.plotly_chart(fig, use_container_width=True)
 
 
+def show_table_UI(metrics, start_date, start_time, curr_time_unit):
+  col1, col2 = st.beta_columns(2)
+  d1 = col1.date_input('Focus on date', start_date, min_value=start_date)
+  is_get_table = col2.button('Show Table')
+  if is_get_table:
+    for metric in metrics:
+      d = str(d1) + 'T' + str(start_time)
+      gsql = get_gsql4table(
+          d, metric['object_type'], curr_time_unit, metric['gsql'])
+      res = run_interpretted_gsql(gsql)
+      l = list(map(lambda x: x['attributes'], res[0]['A']))
+      st.text(metric['name'])
+      st.dataframe(pd.DataFrame(l))
+
+
 show_metric_config_UI()
-# show_chart(read_saved_metrics())
