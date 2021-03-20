@@ -105,7 +105,7 @@ def add_update_metric(metric, name: str):
   write_saved_metrics(metrics)
 
 
-def show_metric_config_UI():
+def build_UI():
   st.title('Temporal Analysis')
 
   metrics = read_saved_metrics()
@@ -113,7 +113,7 @@ def show_metric_config_UI():
   metric_names = []
   for metric in metrics:
     metric_names.append(metric['name'])
-
+  st.header('Timely Metrics')
   selected_metric_name = st.selectbox('Saved Metrics:', tuple(metric_names))
   the_metric = find_metric(selected_metric_name, metrics)
 
@@ -210,9 +210,9 @@ def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_
 
 
 def show_table_UI(metrics, start_date, start_time, curr_time_unit):
-  col1, col2 = st.beta_columns(2)
-  d1 = col1.date_input('Focus on date', start_date, min_value=start_date)
-  is_get_table = col2.button('Show Table')
+  st.header('Show as Table')
+  d1 = st.date_input('', start_date, min_value=start_date)
+  is_get_table = st.button('Show Table')
   if is_get_table:
     for metric in metrics:
       d = str(d1) + 'T' + str(start_time)
@@ -224,4 +224,4 @@ def show_table_UI(metrics, start_date, start_time, curr_time_unit):
       st.dataframe(pd.DataFrame(l))
 
 
-show_metric_config_UI()
+build_UI()
