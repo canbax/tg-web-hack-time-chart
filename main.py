@@ -1,11 +1,17 @@
 from typing import List
 import streamlit as st
+import streamlit.components.v1 as components
 from tgApi import run_interpretted_gsql
 import datetime
 import plotly.graph_objects as go
 import json
 import copy
 import pandas as pd
+import graphistry
+
+st.set_page_config(layout='wide')
+graphistry.register(api=3, protocol="https", server="hub.graphistry.com",
+                    username="canbax", password="good4all")
 
 with open('tg_conf.json', 'r') as f:
   CONF = json.loads(f.read())
@@ -13,12 +19,21 @@ with open('tg_conf.json', 'r') as f:
 
 def read_saved_metrics() -> List:
   with open('saved_metrics.json', 'r') as f:
-    return json.loads(f.read())
+    s = f.read()
+    if len(s) > 1:
+      return json.loads(s)
+    return []
 
 
 def write_saved_metrics(metrics):
   with open('saved_metrics.json', 'w+') as f:
     f.write(json.dumps(metrics))
+
+
+def show_on_graphistry():
+  df = pd.DataFrame({'src': [0, 1, 2], 'dst': [1, 2, 0]})
+  iframe_url = graphistry.edges(df, 'src', 'dst').plot(render=False)
+  components.iframe(iframe_url, height=750)
 
 
 def get_gsql4chart(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Account', time_unit='YEAR', condition_gsql=''):
@@ -170,6 +185,8 @@ def build_UI():
   is_clicked = col2.button('Add/Update Metric')
   is_any_clicked = is_clicked or is_any_clicked
   if is_clicked:
+    if the_metric is None:
+      the_metric = {}
     the_metric['name'] = curr_metric_name
     the_metric['color'] = curr_metric_color
     the_metric['gsql'] = curr_metric_gsql
@@ -181,13 +198,14 @@ def build_UI():
   if is_clicked:
     delete_metric(curr_metric_name)
 
-  if is_any_clicked:
-    show_chart(read_saved_metrics(), start_date, start_time,
-               curr_num_data_points, curr_time_unit)
+  show_chart(read_saved_metrics(), start_date, start_time,
+             curr_num_data_points, curr_time_unit)
   show_table_UI(metrics, start_date, start_time, curr_time_unit)
 
 
 def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_unit):
+  if metrics is None or len(metrics) < 1:
+    return
   fig = go.Figure()
   for metric in metrics:
     d = str(start_date) + 'T' + str(start_time)
@@ -225,3 +243,4 @@ def show_table_UI(metrics, start_date, start_time, curr_time_unit):
 
 
 build_UI()
+show_on_graphistry()
