@@ -159,6 +159,7 @@ def build_UI():
     curr_metric_color = the_metric['color']
     curr_metric_gsql = the_metric['gsql']
     curr_metric_obj_type = the_metric['object_type']
+    curr_metric_agg = the_metric['agg']
 
   statCol1, statCol2, statCol3, statCol4 = st.beta_columns(4)
   with statCol1:
@@ -279,7 +280,8 @@ def show_graph_UI(metrics, start_date, start_time, curr_num_data_points, curr_ti
                               date_arr, value=(date_arr[0], date_arr[-1]))
   # s1 = datetime.datetime.strptime(s1, '%Y-%m-%d %H:%M:%S')
   # s2 = datetime.datetime.strptime(s2, '%Y-%m-%d %H:%M:%S')
-  is_get_graph = st.button('Get Graph elements in range ' + str(s1) + ' - ' + str(s2))
+  is_get_graph = st.button(
+      'Get Graph elements in range ' + str(s1) + ' - ' + str(s2))
   if is_get_graph and metrics is not None and len(metrics) > 0:
     nodes = []
     edges = []
