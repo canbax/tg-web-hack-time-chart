@@ -42,10 +42,13 @@ def show_on_graphistry(nodes, edges):
   components.iframe(iframe_url, height=750)
 
 
-def get_gsql4chart(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Account', time_unit='YEAR', condition_gsql=''):
+def get_gsql4chart(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Account', time_unit='YEAR', condition_gsql='', agg=''):
   time_prop = CONF['lifetimeProperties'][selected_type]
   if len(condition_gsql) > 1:
     condition_gsql = 'AND (' + condition_gsql + ')'
+  agg_prop = '1'
+  if len(agg) > 0:
+    agg_prop = 'x.' + agg
   gsql = """
   INTERPRET QUERY () FOR GRAPH MyGraph {
   SumAccum<INT> @@cnt;
@@ -57,7 +60,7 @@ def get_gsql4chart(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_t
   FOREACH i IN RANGE[1, count_stat] DO
     A = SELECT x From acc: x
         WHERE (x.""" + time_prop + ' > startDate AND x.' + time_prop + ' < datetime_add(startDate, INTERVAL 1 ' + time_unit + ')) ' + condition_gsql + """
-        ACCUM @@cnt += 1;
+        ACCUM @@cnt += """ + agg_prop + """;
 
     diff = @@cnt - prev_cnt;
 
@@ -146,6 +149,7 @@ def build_UI():
   the_metric = find_metric(selected_metric_name, metrics)
 
   curr_metric_name = 'metric 0'
+  curr_metric_agg = ''
   curr_metric_color = '#ff0000'
   curr_metric_gsql = ''
   curr_metric_obj_type = list(CONF['lifetimeProperties'].keys())[0]
@@ -156,7 +160,7 @@ def build_UI():
     curr_metric_gsql = the_metric['gsql']
     curr_metric_obj_type = the_metric['object_type']
 
-  statCol1, statCol2, statCol3 = st.beta_columns(3)
+  statCol1, statCol2, statCol3, statCol4 = st.beta_columns(4)
   with statCol1:
     curr_metric_name = st.text_input('Metric Name', curr_metric_name)
   with statCol2:
@@ -165,6 +169,8 @@ def build_UI():
     obj_types = tuple(CONF['lifetimeProperties'].keys())
     curr_metric_obj_type = st.selectbox('Object Type: ', obj_types,
                                         obj_types.index(curr_metric_obj_type))
+  with statCol4:
+    curr_metric_agg = st.text_input('Aggregate', curr_metric_agg)
 
   curr_metric_gsql = st.text_input('Rule', curr_metric_gsql)
 
@@ -193,7 +199,7 @@ def build_UI():
   is_any_clicked = is_clicked or is_any_clicked
   if is_clicked:
     new_metrics.append({'name': curr_metric_name, 'color': curr_metric_color,
-                        'gsql': curr_metric_gsql, 'object_type': curr_metric_obj_type})
+                        'gsql': curr_metric_gsql, 'object_type': curr_metric_obj_type, 'agg': curr_metric_agg})
 
   is_clicked = col2.button('Add/Update Metric')
   is_any_clicked = is_clicked or is_any_clicked
@@ -204,6 +210,7 @@ def build_UI():
     the_metric['color'] = curr_metric_color
     the_metric['gsql'] = curr_metric_gsql
     the_metric['object_type'] = curr_metric_obj_type
+    the_metric['agg'] = curr_metric_agg
     add_update_metric(the_metric, curr_metric_name)
 
   is_clicked = col3.button('Delete Metric')
@@ -226,7 +233,7 @@ def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_
   for metric in metrics:
     d = str(start_date) + 'T' + str(start_time)
     gsql = get_gsql4chart(curr_num_data_points, d,
-                          metric['object_type'], curr_time_unit, metric['gsql'])
+                          metric['object_type'], curr_time_unit, metric['gsql'], metric['agg'])
 
     res = run_interpretted_gsql(gsql)
     fig.add_trace(go.Bar(
@@ -272,9 +279,7 @@ def show_graph_UI(metrics, start_date, start_time, curr_num_data_points, curr_ti
                               date_arr, value=(date_arr[0], date_arr[-1]))
   # s1 = datetime.datetime.strptime(s1, '%Y-%m-%d %H:%M:%S')
   # s2 = datetime.datetime.strptime(s2, '%Y-%m-%d %H:%M:%S')
-  cnt = get_estimated_graph_elem_cnt(s1, s2)
-  is_get_graph = st.button('Get Graph for ' + str(cnt) +
-                           '+ elements in range ' + str(s1) + ' - ' + str(s2))
+  is_get_graph = st.button('Get Graph elements in range ' + str(s1) + ' - ' + str(s2))
   if is_get_graph and metrics is not None and len(metrics) > 0:
     nodes = []
     edges = []

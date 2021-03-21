@@ -1,16 +1,1 @@
-[{
-  "name": "Accounts Count",
-  "color": "#ef0e64",
-  "object_type": "Account",
-  "gsql": ""
-}, {
-  "name": "Lead Count",
-  "color": "#5b2fde",
-  "object_type": "Lead",
-  "gsql": "x.FirstName LIKE \"A%\""
-}, {
-  "name": "Campaign Count",
-  "color": "#5af328",
-  "object_type": "Campaign",
-  "gsql": ""
-}]
+[{"name": "Accounts Count", "color": "#ef0e64", "object_type": "Account", "gsql": "", "agg": "NumberofEmployees"}, {"name": "Lead Count", "color": "#5b2fde", "object_type": "Lead", "gsql": "x.FirstName LIKE \"A%\"", "agg": ""}, {"name": "Campaign Count", "color": "#5af328", "object_type": "Campaign", "gsql": "", "agg": ""}]
