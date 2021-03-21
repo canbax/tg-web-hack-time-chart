@@ -13,6 +13,12 @@ st.set_page_config(layout='wide')
 graphistry.register(api=3, protocol="https", server="hub.graphistry.com",
                     username="canbax", password="good4all")
 
+# time unit to seconds of that unit
+time_unit2stamp = {'YEAR': 31622400, 'MONTH': 2678400,
+                   'DAY': 86400, 'HOUR': 3600, 'MINUTE': 60, 'SECOND': 1}
+
+curr_charts = []
+
 with open('tg_conf.json', 'r') as f:
   CONF = json.loads(f.read())
 
@@ -30,9 +36,9 @@ def write_saved_metrics(metrics):
     f.write(json.dumps(metrics))
 
 
-def show_on_graphistry():
-  df = pd.DataFrame({'src': [0, 1, 2], 'dst': [1, 2, 0]})
-  iframe_url = graphistry.edges(df, 'src', 'dst').plot(render=False)
+def show_on_graphistry(nodes, edges):
+  iframe_url = graphistry.bind(node='v_id').nodes(
+      nodes).edges(edges, 'from_id', 'to_id').plot(render=False)
   components.iframe(iframe_url, height=750)
 
 
@@ -69,18 +75,25 @@ def get_gsql4chart(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_t
   return gsql
 
 
-def get_gsql4table(start_date_str='2000-01-01T00:00:00', selected_type='Account', time_unit='YEAR', condition_gsql=''):
+def get_gsql4graph(start_date_str='2000-01-01T00:00:00', end_date_str='2020-01-01T00:00:00', selected_type='Account', condition_gsql=''):
   time_prop = CONF['lifetimeProperties'][selected_type]
   if len(condition_gsql) > 1:
     condition_gsql = 'AND (' + condition_gsql + ')'
   gsql = """
   INTERPRET QUERY () FOR GRAPH MyGraph {
+    SetAccum<EDGE> @@edgeSet;
   """ + f' DATETIME startDate = to_datetime("{start_date_str}");' + \
-      'acc = {' + selected_type + '.*};' + """
-
-  A = SELECT x From acc: x
-      WHERE (x.""" + time_prop + ' > startDate AND x.' + time_prop + ' < datetime_add(startDate, INTERVAL 1 ' + time_unit + ')) ' + condition_gsql + """;
+      f' DATETIME endDate = to_datetime("{end_date_str}");' + ' acc = {' + selected_type + '.*};' + """
+  
+  A = SELECT x From acc:x-(:e)-:x2
+      WHERE (x.""" + time_prop + ' > startDate AND x.' + time_prop + ' < endDate) ' + condition_gsql + """
+      ACCUM @@edgeSet += e;
+  B = SELECT x From acc:x-(:e)-:x2
+      WHERE (x.""" + time_prop + ' > startDate AND x.' + time_prop + ' < endDate) ' + condition_gsql + """;
+        
   print A;
+  print B;
+  print @@edgeSet;
   }
   """
   return gsql
@@ -158,8 +171,8 @@ def build_UI():
   # set the date and time
   col1, col2 = st.beta_columns(2)
   with col1:
-    start_date = st.date_input('Start Date',     datetime.date(
-        2000, 1, 1), min_value=datetime.date(1900, 1, 1))
+    start_date = st.date_input('Start Date',     datetime.datetime(
+        2000, 1, 1), min_value=datetime.datetime(1900, 1, 1))
   with col2:
     start_time = st.time_input('and Time', datetime.time(0, 0))
   TIME_UNITS = ('YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTE', 'SECOND')
@@ -200,10 +213,13 @@ def build_UI():
 
   show_chart(read_saved_metrics(), start_date, start_time,
              curr_num_data_points, curr_time_unit)
-  show_table_UI(metrics, start_date, start_time, curr_time_unit)
+  show_graph_UI(metrics, start_date, start_time,
+                curr_num_data_points, curr_time_unit)
 
 
 def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_unit):
+  global curr_charts
+  curr_charts = []
   if metrics is None or len(metrics) < 1:
     return
   fig = go.Figure()
@@ -221,26 +237,60 @@ def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_
         name=metric['name'],
         marker_color=metric['color']
     ))
+    curr_charts.append(
+        {'name': metric['name'], 'x': res[1]['@@dates'], 'y': res[0]['@@stats']})
 
   # Here we modify the tickangle of the xaxis, resulting in rotated labels.
   fig.update_layout(barmode='group', xaxis_tickangle=-45)
   st.plotly_chart(fig, use_container_width=True)
 
 
-def show_table_UI(metrics, start_date, start_time, curr_time_unit):
-  st.header('Show as Table')
-  d1 = st.date_input('', start_date, min_value=start_date)
-  is_get_table = st.button('Show Table')
-  if is_get_table:
+def get_estimated_graph_elem_cnt(d1: datetime.datetime, d2: datetime.datetime):
+  global curr_charts
+  cnt = 0
+  for metric in curr_charts:
+    x = metric['x']
+    y = metric['y']
+    for idx, xi in enumerate(x):
+      d = datetime.datetime.strptime(xi, '%Y-%m-%d %H:%M:%S')
+      if d >= d1 and d <= d2:
+        cnt += y[idx]
+  return cnt
+
+
+def show_graph_UI(metrics, start_date, start_time, curr_num_data_points, curr_time_unit):
+  st.header('Show as Graph')
+  start_date = datetime.datetime.combine(start_date, start_time)
+  ts = (start_date - datetime.datetime(1970, 1, 1)).total_seconds()
+  date_arr = [start_date]
+  for i in range(curr_num_data_points):
+    d = datetime.datetime.fromtimestamp(
+        ts + (i + 1) * time_unit2stamp[curr_time_unit])
+    date_arr.append(d)
+
+  (s1, s2) = st.select_slider('select range',
+                              date_arr, value=(date_arr[0], date_arr[-1]))
+  # s1 = datetime.datetime.strptime(s1, '%Y-%m-%d %H:%M:%S')
+  # s2 = datetime.datetime.strptime(s2, '%Y-%m-%d %H:%M:%S')
+  cnt = get_estimated_graph_elem_cnt(s1, s2)
+  is_get_graph = st.button('Get Graph for ' + str(cnt) + '+ elements')
+  if is_get_graph and metrics is not None and len(metrics) > 0:
+    nodes = []
+    edges = []
     for metric in metrics:
-      d = str(d1) + 'T' + str(start_time)
-      gsql = get_gsql4table(
-          d, metric['object_type'], curr_time_unit, metric['gsql'])
+      gsql = get_gsql4graph(s1, s2, metric['object_type'], metric['gsql'])
       res = run_interpretted_gsql(gsql)
-      l = list(map(lambda x: x['attributes'], res[0]['A']))
-      st.text(metric['name'])
-      st.dataframe(pd.DataFrame(l))
+      src_nodes = res[0]['A']
+      nodes.extend(src_nodes)
+      tgt_nodes = res[1]['B']
+      nodes.extend(tgt_nodes)
+      edgeSet = res[2]['@@edgeSet']
+      edges.extend(edgeSet)
+
+    print(nodes[0])
+    print('-----------------------------------------------------------')
+    print(edges[0])
+    show_on_graphistry(pd.DataFrame(nodes), pd.DataFrame(edges))
 
 
 build_UI()
-show_on_graphistry()
