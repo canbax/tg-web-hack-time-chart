@@ -299,19 +299,29 @@ def show_graph_UI(metrics, start_date, start_time, curr_num_data_points, curr_ti
         st.error('GSQL ERROR')
         st.error(e)
         return
-      src_nodes = res[0]['A']
+      src_nodes = extract_node_attributes(res[0]['A'])
       nodes.extend(src_nodes)
-      tgt_nodes = res[1]['B']
+      tgt_nodes = extract_node_attributes(res[1]['B'])
       nodes.extend(tgt_nodes)
       edgeSet = res[2]['@@edgeSet']
       edges.extend(edgeSet)
 
-    print(len(nodes))
-    print('-----------------------------------------------------------')
-    print(len(edges))
+    if len(nodes) < 1:
+      st.text('Empty response!')
+      return
     df1 = pd.DataFrame(nodes)
     df2 = pd.DataFrame(edges)
     show_on_graphistry(df1, df2)
+
+
+def extract_node_attributes(nodes):
+  l = []
+  for node in nodes:
+    att = node['attributes']
+    att['v_id'] = node['v_id']
+    att['v_type'] = node['v_type']
+    l.append(att)
+  return l
 
 
 def show_gsql_error_msg(resp):

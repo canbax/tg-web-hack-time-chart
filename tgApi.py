@@ -8,6 +8,7 @@ with open('tg_conf.json', 'r') as f:
 
 
 def run_interpretted_gsql(gsql: str):
+  print(gsql)
   domain = CONF['db']['host']
   url = f'{domain}:14240/gsqlserver/interpreted_query'
   usr = CONF['db']['username']
