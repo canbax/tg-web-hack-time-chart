@@ -44,13 +44,14 @@ def show_on_graphistry(nodes, edges):
 
 def get_gsql4chart(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_type='Account', time_unit='YEAR', condition_gsql='', agg=''):
   time_prop = CONF['lifetimeProperties'][selected_type]
+  graph_name = CONF['db']['graph_name']
   if len(condition_gsql) > 1:
     condition_gsql = 'AND (' + condition_gsql + ')'
   agg_prop = '1'
   if len(agg) > 0:
     agg_prop = 'x.' + agg
   gsql = """
-  INTERPRET QUERY () FOR GRAPH MyGraph {
+  INTERPRET QUERY () FOR GRAPH """ + graph_name + """ {
   SumAccum<INT> @@cnt;
   ListAccum<INT> @@stats;
   ListAccum<DATETIME> @@dates;
@@ -79,11 +80,12 @@ def get_gsql4chart(cnt_stat=20, start_date_str='2000-01-01T13:45:30', selected_t
 
 
 def get_gsql4graph(start_date_str='2000-01-01T00:00:00', end_date_str='2020-01-01T00:00:00', selected_type='Account', condition_gsql=''):
+  graph_name = CONF['db']['graph_name']
   time_prop = CONF['lifetimeProperties'][selected_type]
   if len(condition_gsql) > 1:
     condition_gsql = 'AND (' + condition_gsql + ')'
   gsql = """
-  INTERPRET QUERY () FOR GRAPH MyGraph {
+  INTERPRET QUERY () FOR GRAPH """ + graph_name + """ {
     SetAccum<EDGE> @@edgeSet;
   """ + f' DATETIME startDate = to_datetime("{start_date_str}");' + \
       f' DATETIME endDate = to_datetime("{end_date_str}");' + ' acc = {' + selected_type + '.*};' + """

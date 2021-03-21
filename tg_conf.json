@@ -3,8 +3,7 @@
     "host": "https://customer360.i.tgcloud.io",
     "username": "tigergraph",
     "password": "123456",
-    "graph_name": "MyGraph",
-    "secret": "8gccenasn5hdotf7f93b6d44kfebami3"
+    "graph_name": "MyGraph"
   },
   "lifetimeProperties": {
     "Opportunity": "CreatedDate",
