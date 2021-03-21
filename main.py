@@ -88,7 +88,7 @@ def get_gsql4graph(start_date_str='2000-01-01T00:00:00', end_date_str='2020-01-0
   A = SELECT x From acc:x-(:e)-:x2
       WHERE (x.""" + time_prop + ' > startDate AND x.' + time_prop + ' < endDate) ' + condition_gsql + """
       ACCUM @@edgeSet += e;
-  B = SELECT x From acc:x-(:e)-:x2
+  B = SELECT x2 From acc:x-(:e)-:x2
       WHERE (x.""" + time_prop + ' > startDate AND x.' + time_prop + ' < endDate) ' + condition_gsql + """;
         
   print A;
@@ -273,7 +273,8 @@ def show_graph_UI(metrics, start_date, start_time, curr_num_data_points, curr_ti
   # s1 = datetime.datetime.strptime(s1, '%Y-%m-%d %H:%M:%S')
   # s2 = datetime.datetime.strptime(s2, '%Y-%m-%d %H:%M:%S')
   cnt = get_estimated_graph_elem_cnt(s1, s2)
-  is_get_graph = st.button('Get Graph for ' + str(cnt) + '+ elements')
+  is_get_graph = st.button('Get Graph for ' + str(cnt) +
+                           '+ elements in range ' + str(s1) + ' - ' + str(s2))
   if is_get_graph and metrics is not None and len(metrics) > 0:
     nodes = []
     edges = []
@@ -287,10 +288,12 @@ def show_graph_UI(metrics, start_date, start_time, curr_num_data_points, curr_ti
       edgeSet = res[2]['@@edgeSet']
       edges.extend(edgeSet)
 
-    print(nodes[0])
+    print(len(nodes))
     print('-----------------------------------------------------------')
-    print(edges[0])
-    show_on_graphistry(pd.DataFrame(nodes), pd.DataFrame(edges))
+    print(len(edges))
+    df1 = pd.DataFrame(nodes)
+    df2 = pd.DataFrame(edges)
+    show_on_graphistry(df1, df2)
 
 
 build_UI()
