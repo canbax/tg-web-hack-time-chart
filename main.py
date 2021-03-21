@@ -235,8 +235,12 @@ def show_chart(metrics, start_date, start_time, curr_num_data_points, curr_time_
     d = str(start_date) + 'T' + str(start_time)
     gsql = get_gsql4chart(curr_num_data_points, d,
                           metric['object_type'], curr_time_unit, metric['gsql'], metric['agg'])
-
-    res = run_interpretted_gsql(gsql)
+    try:
+      res = run_interpretted_gsql(gsql)
+    except Exception as e:
+      st.error('GSQL ERROR')
+      st.error(e)
+      return
     fig.add_trace(go.Bar(
         y=res[0]['@@stats'],
         text=res[0]['@@stats'],
@@ -287,7 +291,12 @@ def show_graph_UI(metrics, start_date, start_time, curr_num_data_points, curr_ti
     edges = []
     for metric in metrics:
       gsql = get_gsql4graph(s1, s2, metric['object_type'], metric['gsql'])
-      res = run_interpretted_gsql(gsql)
+      try:
+        res = run_interpretted_gsql(gsql)
+      except Exception as e:
+        st.error('GSQL ERROR')
+        st.error(e)
+        return
       src_nodes = res[0]['A']
       nodes.extend(src_nodes)
       tgt_nodes = res[1]['B']
@@ -301,6 +310,11 @@ def show_graph_UI(metrics, start_date, start_time, curr_num_data_points, curr_ti
     df1 = pd.DataFrame(nodes)
     df2 = pd.DataFrame(edges)
     show_on_graphistry(df1, df2)
+
+
+def show_gsql_error_msg(resp):
+  if isinstance(resp, str) and resp.startswith('ERROR!'):
+    st.error('GSQL error: ' + resp)
 
 
 build_UI()

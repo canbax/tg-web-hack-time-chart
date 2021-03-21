@@ -28,11 +28,10 @@ def run_interpretted_gsql(gsql: str):
   response = requests.post(url, data=gsql, auth=(usr, pwd))
   obj = json.loads(response.text)
   if obj['error']:
-    return 'error: ' + obj['message']
+    raise Exception(obj['message'])
   return obj['results']
 
-  
-  ## WORKING CODE !!!!
+  # WORKING CODE !!!!
   # data = 'INTERPRET QUERY () FOR GRAPH MyGraph { print "heloo"; }'
   # response = requests.post('https://customer360.i.tgcloud.io:14240/gsqlserver/interpreted_query', data=data, auth=('tigergraph', '123456'))
   # print(response.text)
