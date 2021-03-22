@@ -193,12 +193,11 @@ def build_UI():
     curr_num_data_points = st.number_input('Number of data points',
                                            max_value=1000, value=20, min_value=0, step=1)
 
-  col1, col2, col3 = st.beta_columns(3)
+  col2, col3 = st.beta_columns(2)
   is_any_clicked = False
   is_clicked = False
   new_metrics = copy.deepcopy(metrics)
 
-  is_clicked = col1.button('Show Chart')
   is_any_clicked = is_clicked or is_any_clicked
   if is_clicked:
     new_metrics.append({'name': curr_metric_name, 'color': curr_metric_color,
