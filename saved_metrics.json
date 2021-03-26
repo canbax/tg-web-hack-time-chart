@@ -1,1 +1,27 @@
-[{"name": "Accounts Count", "color": "#ef0e64", "object_type": "Account", "gsql": "", "agg": ""}, {"name": "Lead Count", "color": "#5b2fde", "object_type": "Lead", "gsql": "x.FirstName LIKE \"A%\" AND x.outdegree(\"converted\") > 0", "agg": ""}, {"name": "Campaign Count", "color": "#5af328", "object_type": "Campaign", "gsql": "", "agg": ""}]
+[{
+    "name": "Accounts Count",
+    "color": "#ef0e64",
+    "object_type": "Account",
+    "gsql": "",
+    "agg": ""
+  }, {
+    "name": "Lead Count with name \"A...\"",
+    "color": "#5b2fde",
+    "object_type": "Lead",
+    "gsql": "x.FirstName LIKE \"A%\" AND x.outdegree(\"converted\") > 0",
+    "agg": ""
+  }, {
+    "name": "Active Costly Campaign Count",
+    "color": "#5af328",
+    "object_type": "Campaign",
+    "gsql": "x.IsActive == true and x.ActualCost > 100",
+    "agg": ""
+  },
+  {
+    "name": "Total Probability of Opportunities",
+    "color": "#ffff00",
+    "object_type": "Opportunity",
+    "gsql": "x.Probability < 15 and x.IsPrivate == false",
+    "agg": "Probability"
+  }
+]
