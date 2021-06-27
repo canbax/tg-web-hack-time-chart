@@ -2,6 +2,9 @@
 
 This project is built for [TigerGraph Web App Hack](https://tigergraph-web-app-hack.devpost.com/). Mainly it is a tool for making time-based custom metrics with [TigerGraph database](https://www.tigergraph.com/). Take a look at [the hackathon submission](https://devpost.com/software/temporal-analysis) for detailed introduction.
 
+# YAAAY!
+This project got the "Most Popular" award in the hackathon.
+
 ## Snapshot
 <p align="center">
     <img src="snapshot.gif" width="600"/>
